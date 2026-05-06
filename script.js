@@ -1,15 +1,11 @@
 const FANVUE_URL = 'https://www.fanvue.com/stacy_miami/fv-3';
+const TG_URL = 'https://t.me/+sWIekAl0YBMxNWVh';
 
 const i18n = {
   en: {
-    title: 'Exclusive Content Stacy',
-    adult: '18+',
-    adultUnlocked: 'Exclusive Content',
-    tg: 'Telegram',
-    modalQ: 'Are you 18 years old or older?',
-    yes: 'Yes, I am 18+',
-    no: "No, I'm under 18",
-    counter: 'Visitors this month:',
+    title: 'Exclusive Content Stacy', adult: '18+', adultUnlocked: 'Exclusive Content', tg: 'Telegram',
+    modalQ: 'Are you 18 years old or older?', yes: 'Yes, I am 18+', no: "No, I'm under 18",
+    counter: 'Visitors this month:', counterLoading: 'Loading...',
     lines: [
       'Private updates are waiting for you ✨', 'Tap and unlock exclusive access', 'Join now and don’t miss new drops',
       'Members get content first', 'Your premium feed starts here', 'Open the private channel now',
@@ -20,14 +16,9 @@ const i18n = {
     ]
   },
   ru: {
-    title: 'Exclusive Content Stacy',
-    adult: '18+',
-    adultUnlocked: 'Эксклюзивный контент',
-    tg: 'Telegram',
-    modalQ: 'Вам уже есть 18 лет?',
-    yes: 'Да, мне есть 18+',
-    no: 'Мне нет 18',
-    counter: 'Посетителей за месяц:',
+    title: 'Exclusive Content Stacy', adult: '18+', adultUnlocked: 'Эксклюзивный контент', tg: 'Telegram',
+    modalQ: 'Вам уже есть 18 лет?', yes: 'Да, мне есть 18+', no: 'Мне нет 18',
+    counter: 'Посетителей за месяц:', counterLoading: 'Загрузка...',
     lines: [
       'Личный контент уже ждёт тебя ✨', 'Нажми и открой эксклюзив', 'Подпишись и не пропускай новинки',
       'Участники видят всё первыми', 'Твой премиум-доступ начинается здесь', 'Открой приватный канал прямо сейчас',
@@ -59,6 +50,9 @@ els.ageText.textContent = t.modalQ;
 els.confirm18.textContent = t.yes;
 els.deny18.textContent = t.no;
 els.counterLabel.textContent = t.counter;
+els.visitorsCount.textContent = t.counterLoading;
+
+document.querySelector('.big-card.tg').setAttribute('href', TG_URL);
 
 els.adultBtn.addEventListener('click', () => els.ageModal.classList.remove('hidden'));
 els.confirm18.addEventListener('click', () => {
@@ -71,41 +65,31 @@ els.confirm18.addEventListener('click', () => {
 });
 els.deny18.addEventListener('click', () => els.ageModal.classList.add('hidden'));
 
-function shuffle(arr) {
-  const copy = [...arr];
-  for (let i = copy.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [copy[i], copy[j]] = [copy[j], copy[i]];
-  }
-  return copy;
-}
-
+function shuffle(arr) { const copy = [...arr]; for (let i = copy.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [copy[i], copy[j]] = [copy[j], copy[i]]; } return copy; }
 function renderTicker() {
   els.ticker.innerHTML = '';
   shuffle(t.lines).slice(0, 3).forEach((line) => {
-    const div = document.createElement('div');
-    div.className = 'callout';
-    div.textContent = line;
-    els.ticker.appendChild(div);
+    const div = document.createElement('div'); div.className = 'callout'; div.textContent = line; els.ticker.appendChild(div);
   });
 }
 renderTicker();
 setInterval(renderTicker, 5600);
 
-function monthlyCounter() {
+async function globalMonthlyCounter() {
   const now = new Date();
-  const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-  const resetAt = `${monthKey}-01T00:01`;
+  const monthKey = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
+  const namespace = 'stacy-global-traffic';
+  const key = `visitors-${monthKey}`;
 
-  const savedMonth = localStorage.getItem('stacy_month_key');
-  let count = Number(localStorage.getItem('stacy_visitors') || '0');
-  if (savedMonth !== monthKey || now >= new Date(resetAt) && savedMonth !== monthKey) {
-    count = 0;
+  try {
+    const url = `https://api.countapi.xyz/hit/${encodeURIComponent(namespace)}/${encodeURIComponent(key)}`;
+    const res = await fetch(url, { method: 'GET', cache: 'no-store' });
+    if (!res.ok) throw new Error('counter_response_failed');
+    const data = await res.json();
+    els.visitorsCount.textContent = String(data.value ?? 0);
+  } catch {
+    els.visitorsCount.textContent = '—';
   }
-  count += 1;
-
-  localStorage.setItem('stacy_month_key', monthKey);
-  localStorage.setItem('stacy_visitors', String(count));
-  els.visitorsCount.textContent = String(count);
 }
-monthlyCounter();
+
+globalMonthlyCounter();
